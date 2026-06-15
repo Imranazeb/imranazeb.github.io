@@ -16,8 +16,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Full history for proper git commits
+        with:          token: ${{ secrets.PAT_TOKEN }}          fetch-depth: 0 # Full history for proper git commits
 
       - name: Set up Python
         uses: actions/setup-python@v5
