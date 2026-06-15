@@ -1,8 +1,5 @@
 .env
 
-# Database
-data/database.db
-
 # Bundler cache
 .bundle
 vendor
