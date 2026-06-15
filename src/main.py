@@ -13,7 +13,7 @@ from utils.logs import logger
 
 from datetime import datetime
 
-count = 15
+count = 30
 
 # most_active = yf.screen("most_actives", count=count or 10)
 day_gainers = yf.screen("day_gainers", count=count or 10)
@@ -247,7 +247,16 @@ def create_blog_post(result):
     other_stocks = [s for s in top_movers if s["symbol"] != stock.symbol][:3]
     for mover in other_stocks:
         percent_change = mover.get("regularMarketChangePercent", 0)
-        content_parts.append(f"- **{mover['symbol']}** ({mover.get('shortName', 'N/A')}): +{percent_change:.2f}%")
+        company_info = get_company_info(mover)
+        website = company_info.get("url", "N/A")
+        
+        # Create hyperlink if website exists
+        if website and website != "N/A":
+            symbol_text = f"[{mover['symbol']}]({website})"
+        else:
+            symbol_text = mover['symbol']
+        
+        content_parts.append(f"- **{symbol_text}** ({mover.get('shortName', 'N/A')}): +{percent_change:.2f}%")
     
     # Build YAML frontmatter
     frontmatter_data = {
