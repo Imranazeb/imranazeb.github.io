@@ -6,6 +6,9 @@ on:
     - cron: "0 06 * * 1-5"
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
+permissions:
+  contents: write # Allow pushing commits
+
 jobs:
   generate-posts:
     runs-on: ubuntu-latest
@@ -39,5 +42,5 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add _posts/ data/
+          git add _posts/
           git diff --staged --quiet || (git commit -m "Add automated stock analysis post [skip ci]" && git push)
