@@ -172,7 +172,8 @@ def get_agent_analysis():
                 "analysis": analysis_result,
                 "stock": unreviewed_stock,
                 "last_filing_title": last_filing_title,
-                "last_filing_url": last_filing_url
+                "last_filing_url": last_filing_url,
+                "sorted_day_gainers": sorted_day_gainers
             }
         else:
             logger.error(
@@ -237,6 +238,16 @@ def create_blog_post(result):
     # Conclusion
     content_parts.append("## Disclaimer")
     content_parts.append(analysis.get("conclusion", "This is not financial advice. Always do your own research before making investment decisions."))
+    content_parts.append("")
+    
+    # Other Notable Movers
+    content_parts.append("## Other Notable Movers")
+    top_movers = result.get("sorted_day_gainers", [])
+    # Get top 3 stocks excluding the main stock
+    other_stocks = [s for s in top_movers if s["symbol"] != stock.symbol][:3]
+    for mover in other_stocks:
+        percent_change = mover.get("regularMarketChangePercent", 0)
+        content_parts.append(f"- **{mover['symbol']}** ({mover.get('shortName', 'N/A')}): +{percent_change:.2f}%")
     
     # Build YAML frontmatter
     frontmatter_data = {
