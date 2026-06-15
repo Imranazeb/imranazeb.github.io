@@ -1,0 +1,43 @@
+name: Generate Stock Analysis Posts
+
+on:
+  schedule:
+    # Run at 6 PM UTC (after market close) on weekdays
+    - cron: "0 06 * * 1-5"
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  generate-posts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for proper git commits
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r src/requirements.txt
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Generate blog post
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python src/main.py
+
+      - name: Commit and push if changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add _posts/ data/
+          git diff --staged --quiet || (git commit -m "Add automated stock analysis post [skip ci]" && git push)
