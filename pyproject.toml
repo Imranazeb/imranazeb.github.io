@@ -1,0 +1,36 @@
+[tool.black]
+line-length = 100
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | node_modules
+)/
+'''
+target-version = ['py38']
+
+[tool.isort]
+line_length = 100
+skip = ".venv"
+multi_line_output = 3
+skip_glob = [
+    "**/migrations/*",
+    "node_modules",
+    ".venv",
+    "**/static/*",
+    "**/media/*",
+    "**/settings/*",
+]
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+
+[tool.ruff]
+format.preview = true

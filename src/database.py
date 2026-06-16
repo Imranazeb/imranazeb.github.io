@@ -57,16 +57,21 @@ def create_stock_data(stock_data: StockData):
 
 def update_reviewed_date(symbol: str) -> None:
     with Session(engine) as session:
-        stock = session.exec(select(StockData).where(StockData.symbol == symbol)).first()
+        stock = session.exec(
+            select(StockData).where(StockData.symbol == symbol)
+        ).first()
         if stock:
             stock.reviewed_at = datetime.now()
             stock.bReviewed = True
             session.add(stock)
             session.commit()
 
+
 def not_reviewed_recently(symbol: str, days_threshold: int = 30) -> bool:
     with Session(engine) as session:
-        stock = session.exec(select(StockData).where(StockData.symbol == symbol)).first()
+        stock = session.exec(
+            select(StockData).where(StockData.symbol == symbol)
+        ).first()
         if stock and stock.reviewed_at:
             days_since_reviewed = (datetime.now() - stock.reviewed_at).days
             return days_since_reviewed > days_threshold
