@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+import requests
 import yaml
 import yfinance as yf
 
@@ -86,9 +87,7 @@ def find_unreviewed_stocks():
             return parse_stock_data(stock)
 
         elif not_reviewed_recently(symbol, days_threshold=30):
-            logger.info(
-                f"Found stock that was not reviewed in the last 30 days: {symbol}"
-            )
+            logger.info(f"Found stock that was not reviewed in the last 30 days: {symbol}")
             return parse_stock_data(stock)
     return None
 
@@ -96,6 +95,16 @@ def find_unreviewed_stocks():
 def major_increase_in_price(stock):
     change_percent = stock["regularMarketChangePercent"]
     return change_percent and change_percent > 5.0
+
+
+def tradingview_url(symbol):
+    url = f"https://www.tradingview.com/chart/?symbol={symbol}"
+    confirm_working_url = requests.head(url)
+    if confirm_working_url.status_code == 200:
+        return url
+    else:
+        logger.warning(f"TradingView URL not accessible for {symbol}: {url}")
+        return "N/A"
 
 
 def get_agent_analysis():
@@ -180,9 +189,7 @@ def get_agent_analysis():
                 "sorted_day_gainers": sorted_day_gainers,
             }
         else:
-            logger.error(
-                f"Could not find original stock data for {unreviewed_stock.symbol}"
-            )
+            logger.error(f"Could not find original stock data for {unreviewed_stock.symbol}")
             return None
     else:
         logger.info("No unreviewed stocks found")
@@ -207,13 +214,34 @@ def create_blog_post(result):
     content_parts.append(analysis["introduction"])
     content_parts.append("")  # blank line
 
-    # Company Info with hyperlink
-    if stock.url and stock.url != "N/A":
-        content_parts.append(f"## About {stock.name}")
-        content_parts.append(
-            f"[{stock.name}]({stock.url}) operates in the {stock.sector} sector, specifically within the {stock.industry} industry."
-        )
-        content_parts.append("")
+    # Company Info with hyperlink and TradingView chart
+    content_parts.append(f"## About {stock.name}")
+    
+    # Build company description with available information
+    company_name = f"[{stock.name}]({stock.url})" if stock.url and stock.url != "N/A" else stock.name
+    
+    # Build sector/industry description
+    sector_info = []
+    if stock.sector and stock.sector != "N/A":
+        sector_info.append(f"the {stock.sector} sector")
+    if stock.industry and stock.industry != "N/A":
+        if sector_info:
+            sector_info.append(f"specifically within the {stock.industry} industry")
+        else:
+            sector_info.append(f"the {stock.industry} industry")
+    
+    # Construct the sentence
+    if sector_info:
+        content_parts.append(f"{company_name} operates in {', '.join(sector_info)}.")
+    else:
+        content_parts.append(f"{company_name} is a publicly traded company.")
+    
+    # Add chart link in About section if available
+    tv_url = tradingview_url(stock.symbol)
+    if tv_url and tv_url != "N/A":
+        content_parts.append(f"\n[See chart on TradingView]({tv_url})")
+    
+    content_parts.append("")
 
     # Key Metrics
     content_parts.append("## Key Metrics")
@@ -222,12 +250,8 @@ def create_blog_post(result):
         content_parts.append(
             f"- **Price Change:** {key_metrics.get('price_change_percent', 'N/A')}"
         )
-        content_parts.append(
-            f"- **Volume Analysis:** {key_metrics.get('volume_analysis', 'N/A')}"
-        )
-        content_parts.append(
-            f"- **Price Movement:** {key_metrics.get('price_movement', 'N/A')}"
-        )
+        content_parts.append(f"- **Volume Analysis:** {key_metrics.get('volume_analysis', 'N/A')}")
+        content_parts.append(f"- **Price Movement:** {key_metrics.get('price_movement', 'N/A')}")
         content_parts.append("")
 
     # Main Analysis
@@ -321,9 +345,7 @@ if result:
             create_stock_data(stock_data)
             logger.info(f"Database entry created for {stock_data.symbol}")
             update_reviewed_date(stock_data.symbol)
-            logger.info(
-                f"Marked {stock_data.symbol} as reviewed with current timestamp"
-            )
+            logger.info(f"Marked {stock_data.symbol} as reviewed with current timestamp")
         else:
             update_reviewed_date(stock_data.symbol)
             logger.info(
